@@ -1,56 +1,126 @@
 <template>
-    <h1>Add a new Task</h1>
-    <div v-if="showErrorMessage">
+    <div class="container">
+      <h2 class="header-title">Add a new Task</h2>
+      <div>
+        <p class="date"><strong> {{ formattedDate }}</strong></p>
+      </div>
+      <div v-if="showErrorMessage">
         <p class="error-text">{{ errorMessage }}</p>
-    </div>
-    <div>
-        <div class="input-field">
-            <input type="text" placeholder="Add a Task Title - Listen to Kendrick Lamar" v-model="name">
-        </div>
-        <div class="input-field">
-            <input type="text" placeholder="Add a Task Description - Look up Kendrick Lamar's FEAR album on spotify and listen to the whole album." v-model="description">
-        </div>
-        <button @click="addTask" class="button">Add</button>
-    </div>
-</template>
-
-<script setup>
-import { ref } from "vue";
-import { useTaskStore } from "../stores/task"   
-
-const taskStore = useTaskStore();
-
-// variables para los valors de los inputs
-const name = ref('');
-const description = ref('');
-
-// constant to save a variable that holds an initial false boolean value for the errorMessage container that is conditionally displayed depending if the input field is empty
-const showErrorMessage = ref(false);
-
-// const constant to save a variable that holds the value of the error message
-const errorMessage = ref(null);
-
-// Arrow function para crear tareas.
-const addTask = () => {
-if(name.value.length === 0 || description.value.length === 0){
-    // Primero comprobamos que ningún campo del input esté vacío y lanzamos el error con un timeout para informar al user.
-
-    showErrorMessage.value = true;
-    errorMessage.value = 'The task title or description is empty';
-    setTimeout(() => {
-    showErrorMessage.value = false;
-    }, 5000);
-
-} else {
-    // Aquí mandamos los valores a la store para crear la nueva Task. Esta parte de la función tenéis que refactorizarla para que funcione con emit y el addTask del store se llame desde Home.vue.
-
-    taskStore.addTask(name.value, description.value);
-    name.value = '';
-    description.value = '';
-}
-};
-
-</script>
-
-<style></style>
+      </div>
+      <form @submit.prevent="addTask">
+        <input v-model="newTask" />
+        <button>Add New Task</button>
+      </form>
   
+      <div v-for="task in filteredTasks" :key="task.id" class="checkbox-wrapper">
+        <input type="checkbox" v-model="task.done" />
+        <span :class="{ done: task.done }">{{ task.text }}</span>
+        <button @click="removeTask(task)">Delete</button>
+      </div>
+  
+      <button @click="hideCompleted = !hideCompleted" class="hide-button">
+        {{ hideCompleted ? 'Show all tasks' : 'Hide completed' }}
+      </button>
+    </div>
+  </template>
+  
+  
+  <script setup>
+  import { ref, computed, onMounted } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { supabase } from '../supabase';
+  import { useTaskStore } from '../stores/task';
+  
+  const taskStore = useTaskStore();
+  
+  let id = 0;
+  const newTask = ref('');
+  
+  const hideCompleted = ref(false);
+  
+  const tasks = ref([]);
+  const filteredTasks = computed(() =>
+    hideCompleted.value ? tasks.value.filter((t) => !t.done) : tasks.value
+  );
+  
+  const currentDate = ref(new Date());
+  
+  const updateCurrentDate = () => {
+    currentDate.value = new Date();
+  };
+  
+  onMounted(() => {
+    updateCurrentDate();
+    setInterval(updateCurrentDate, 24 * 60 * 60 * 1000); // Actualizar cada día (24 horas * 60 minutos * 60 segundos * 1000 milisegundos)
+  });
+  
+  const formattedDate = ref('');
+  
+  onMounted(() => {
+    const options = { day: 'numeric', month: 'long', year: 'numeric' };
+    const formatter = new Intl.DateTimeFormat('en', options);
+    formattedDate.value = formatter.format(currentDate.value);
+  });
+  
+  function addTask() {
+    tasks.value.push({
+      id: id++,
+      text: newTask.value,
+      done: false
+    });
+  
+    newTask.value = '';
+  }
+  
+  function removeTask(task) {
+    const index = tasks.value.indexOf(task);
+    if (index !== -1) {
+      tasks.value.splice(index, 1);
+    }
+  }
+  
+  const router = useRouter();
+  
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
+    router.push('/auth');
+  }
+  </script>
+  
+  <style scooped >
+  
+  .header-title{
+    color:rgb(59, 92, 200);
+    text-align: center;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgb(250, 250, 250);
+  
+    font-size: 75px;
+  }
+  .subtitle {
+    color: white;
+    text-align: center;
+    margin-top: 50px;
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+  }
+  .date{
+    color:rgb(28, 56, 93);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+  }
+  
+  .subtitle {
+    color: white;
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+  }
+  .date{
+    color:rgb(53, 74, 150);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+  }
+
+  </style>
+    

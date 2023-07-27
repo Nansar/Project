@@ -1,27 +1,21 @@
 <template>
-  <nav>
-    <!-- <PersonalRouter :route="route" :buttonText="buttonText" class="logo-link"/> -->
-    <router-link to="/">
-      Home
-    </router-link>
+  <nav class="menu">
 
-    <ul>
-        <li>
-          <router-link to="/">Task Manager</router-link>
-        </li>
+    <router-link to="/" class="linkBarra"> Home </router-link>
 
-        <li>
-          <router-link to="/account">Your Account</router-link>
-        </li>
-    </ul>
+    <router-link to="/account" class="linkBarra">Your Account</router-link>
 
-    <div>
+    <router-link to="/" class="linkBarra">Your Tasks</router-link>
+
+
+    <div class="">
       <ul>
         <li class="log-out-welcome">
-          <p>Welcome, user</p>
+          <p class="linkBarra">Welcome,  
+            <span class="email">{{ getEmailPrefix(getUser.email) }}</span></p>
         </li>
         <li>
-          <button @click="signOut" class="button">Log out</button>
+          <button @click="signOut" class="logOut">Log Out</button>
         </li>
       </ul>
     </div>
@@ -29,42 +23,62 @@
 </template>
 
 <script setup>
-// import PersonalRouter from "./PersonalRouter.vue";
+
 import { useUserStore } from "../stores/user";
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { ref } from 'vue';
+import { supabase } from "../supabase";
 
-//constant to save a variable that will hold the use router method
+const user = supabase.auth.user();
+
 const route = "/";
 const buttonText = "Todo app";
 
-// constant to save a variable that will get the user from store with a computed function imported from vue
-// const getUser = computed(() => useUserStore().user);
-const getUser = useUserStore().user;
 
-// constant that calls user email from the useUSerStore
+const getUser = useUserStore().user;
+console.log(useUserStore().user);
+
 const userEmail = getUser.email;
 
-// async function that calls the signOut method from the useUserStore and pushes the user back to the Auth view.
+const userStore = useUserStore();
+const router = useRouter();
+
+const getUserEmail = () => {
+  const user = getUser.value;
+  if (user) {
+    userEmail.value = user.email;
+  }
+};
+getUserEmail();
+
 const redirect = useRouter();
 
 const signOut = async () => {
   try{
-    // call the user store and send the users info to backend to signOut
-    // then redirect user to the homeView
+   
+
+    await useUserStore().signOut();
+    redirect.push({ path: "/auth/login" });
+
   } catch (error) {}
 };
 
+const getEmailPrefix = (email) => {
+  const atIndex = email.indexOf('@');
+  if (atIndex !== -1) {
+    return email.slice(0, atIndex);
+  }
+  return email;
+};
 </script>
 
-<style>
-.navbar-img {
-  width: 90px;
-}
+<style scoped>
+
+
 
 nav {
-  background-color: lightgray;
+  background-color: rgb(48, 115, 170);
   display: flex;
   width: 100%;
   justify-content: space-around;
@@ -77,5 +91,32 @@ nav ul {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.linkBarra{
+  color: rgb(87, 15, 15);
+  text-decoration: none;
+  font-size: 3vh;
+  text-decoration: none;
+  background-color: transparent;
+  
+}
+
+.email{
+  color: rgb(87, 15, 15);
+  background-color: transparent;
+}
+
+.logOut {
+
+  height: 45px;
+  width: 80px;
+  align-content: center;
+  padding: 10px 15px;
+  background-color: rgb(128, 134, 146);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  
 }
 </style>

@@ -135,7 +135,7 @@ p {
 }
 
 .header-title{
-  color: rgb(29, 86, 51);
+  color: rgb(57, 74, 181);
   text-align: center;
   margin-bottom: 30px;
   font-size: 45px;
@@ -173,7 +173,7 @@ p {
 
 .button {
   padding: 10px 30px;
-  background-color: rgb(29, 86, 51);
+  background-color: rgb(51, 73, 185);
   color: black;
   border: none;
   border-radius: 7px;
